@@ -1,5 +1,4 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -150,10 +149,17 @@
                 <th>Project Start Date</th>
                 <td>${projectDto.projectStartDate}</td>
             </tr>
-            <tr>
-                <th>Project Status</th>
-                <td>${projectDto.projectStatus}</td>
-            </tr>
+			<tr>
+			  <th>Project Status</th>
+			  <td>
+			    <% if (projectDto.projectStatus.equals("O")) { %>
+			     COMPLETED
+			   <% } else { %>
+			     INPROGRESS
+			   <% } %>
+			  </td>
+			</tr>
+
             <tr>
                 <th>Project Last Updated Date</th>
                 <td>${projectDto.projectLastUpdatedDate}</td>
@@ -162,12 +168,13 @@
     </div>
 
 <div class="summary-container">
-    <div class="summary-card sprint-summary">
-        <h3>Sprint Summary</h3>
-        <p>Total Sprints: ${projectDto.totalSprints}</p>
-        <p>Completed Sprints: ${projectDto.completedSprints}</p>
-        <p>Ongoing Sprints: ${projectDto.totalSprints - projectDto.completedSprints}</p>
-    </div>
+<div class="summary-card sprint-summary" onclick="upper()">
+    <h3>Sprint Summary</h3>
+    <p>Total Sprints: ${projectDto.totalSprints}</p>
+    <p>Completed Sprints: ${projectDto.completedSprints}</p>
+    <p>Ongoing Sprints: ${projectDto.totalSprints - projectDto.completedSprints}</p>
+</div>
+
 
     <div class="summary-card task-summary">
         <h3>Task Summary</h3>
@@ -187,7 +194,9 @@
     function goBack() {
         window.history.back(); // Go back to the previous page
     }
-
+    function upper(){
+    	window.location.href = 'sprintbyprojectid?projectId=' + ${projectDto.projectId};
+    }
         function callModuleDetailsByProjId() {
             window.location.href = 'moduleDetailsByProjId?projectId=' + ${projectDto.projectId};
         }

@@ -1,7 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ page import="com.nkxgen.spring.orm.model.Project" %>
-<%@ page import="com.nkxgen.spring.orm.model.Role" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -156,11 +154,22 @@
                                 '<a href="resources/tasks?userId=' + resource.userId + '">View Tasks</a>' +
                                 '</td>' +
                                 '</tr>';
+
+                            // Append the additional information
+                            filteredResourcesHtml += '<tr>' +
+                                '<td colspan="5">' +
+                                'Hours Worked: ' + resource.hoursWorked + '<br>' +
+                                'Tasks Completed: ' + resource.tasksCompleted + '<br>' +
+                                'Performance Score: ' + resource.performanceScore +
+                                '</td>' +
+                                '</tr>';
                         });
-                        $('#filteredResources table tbody').html(filteredResourcesHtml);
+
+                        // Update the table body with the generated HTML
+                        $('#resourcesTable tbody').html(filteredResourcesHtml);
                     },
-                    error: function() {
-                        console.log('Error occurred during filter request.');
+                    error: function(xhr, status, error) {
+                        console.log(error);
                     }
                 });
             });
@@ -191,7 +200,7 @@
     </form>
 
     <div id="filteredResources">
-        <table>
+        <table id="resourcesTable">
             <thead>
                 <tr>
                     <th>ID</th>
@@ -199,7 +208,6 @@
                     <th>Employee ID</th>
                     <th>Role</th>
                     <th>Action</th>
-                    <th>Tasks</th>
                 </tr>
             </thead>
             <tbody>
@@ -209,10 +217,16 @@
                         <td><a href="resources/details?displayName=${resource.userDisplayName}">${resource.userDisplayName}</a></td>
                         <td>${resource.userEmployeeId}</td>
                         <td>${resource.userRole.roleName}</td>
-                        <td class="action-column">
-                            <a href="resources/update?displayName=${resource.userDisplayName}">Update</a>
-                            <span class="divider">|</span>
+                        <td>
+                            <a href="resources/update?displayName=${resource.userDisplayName}">Update</a> |
                             <a href="resources/tasks?userId=${resource.userId}">View Tasks</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="5">
+                            Hours Worked: ${resource.hoursWorked}<br>
+                            Tasks Completed: ${resource.tasksCompleted}<br>
+                            Performance Score: ${resource.performanceScore}
                         </td>
                     </tr>
                 </c:forEach>

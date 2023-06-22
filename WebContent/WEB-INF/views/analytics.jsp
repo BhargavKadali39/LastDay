@@ -10,7 +10,7 @@
   <input type="number" id="resourceIdInput" name="resourceId" required>
   <button onclick="dubber()">Submit</button>
 
-  <div class="chart-row">
+  <div class="chart-row" id="chartRow1">
     <div class="chart-container">
       <h1>Project Wise Time spent(Hrs)</h1>
       <h1 id="nores"></h1>
@@ -24,7 +24,7 @@
     </div>
   </div>
 
-  <div class="chart-row">
+  <div class="chart-row" id="chartRow2">
     <div class="chart-container">
       <h1>Task Wise Time spent(Hrs)</h1>
       <h1 id="noresTask"></h1>
@@ -39,6 +39,7 @@
   </div>
 
   <script>
+  
   var pieChart = null;
   var pieChartModule = null;
   var pieChartTask = null;
@@ -82,11 +83,11 @@
         responsive: true,
         maintainAspectRatio: false,
         tooltips: {
-          enabled: false
+          enabled: true
         },
         plugins: {
           legend: {
-            display: false
+            display: true
           }
         }
       }
@@ -108,14 +109,15 @@
 
     $.ajax({
       type: "POST",
-      url: "getProjAnaById",
+      url: "getUserAnalytics",
       data: {
         "user_id": resourceId
       },
       success: function(response) {
-        var projectWorkingHoursMap = JSON.parse(response);
+        var analyticsData = JSON.parse(response);
 
-        if (Object.keys(projectWorkingHoursMap).length === 0) {
+        // Check if the analyticsData is empty
+        if (Object.keys(analyticsData).length === 0) {
           document.getElementById("nores").innerHTML = "No such resource";
           document.getElementById("noresModule").innerHTML = "No such resource";
           document.getElementById("noresTask").innerHTML = "No such resource";
@@ -124,34 +126,95 @@
           return;
         }
 
+        // Clear previous error messages
         document.getElementById("nores").innerHTML = "";
         document.getElementById("noresModule").innerHTML = "";
         document.getElementById("noresTask").innerHTML = "";
         document.getElementById("noresSubTask").innerHTML = "";
 
-        var projectNames = Object.keys(projectWorkingHoursMap);
-        var workingHours = Object.values(projectWorkingHoursMap);
-        var colors = generateRandomColors(projectNames.length);
+        // Extract data from analyticsData
+        var projectSummaries = analyticsData.projectSummaries;
+        var moduleSummaries = analyticsData.moduleSummaries;
+        var taskSummaries = analyticsData.taskSummaries;
+        var subtaskSummaries = analyticsData.subtaskSummaries;
 
-        createChart("pieChart", workingHours, colors);
-        createChart("pieChartModule", workingHours, colors);
-        createChart("pieChartTask", workingHours, colors);
-        createChart("pieChartSubTask", workingHours, colors);
+        // Extract project names and working hours
+        var projectNames = projectSummaries.map(function(summary) {
+          return summary.projName;
+        });
+        var projectWorkingHours = projectSummaries.map(function(summary) {
+          return summary.totalWorkingHours;
+        });
 
+        // Extract module names and working hours
+        var moduleNames = moduleSummaries.map(function(summary) {
+          return summary.moduleName;
+        });
+        var moduleWorkingHours = moduleSummaries.map(function(summary) {
+          return summary.totalWorkingHours;
+        });
+
+        // Extract task names and working hours
+        var taskNames = taskSummaries.map(function(summary) {
+          return summary.taskName;
+        });
+        var taskWorkingHours = taskSummaries.map(function(summary) {
+          return summary.totalWorkingHours;
+        });
+
+        // Extract subtask names and working hours
+        var subtaskNames = subtaskSummaries.map(function(summary) {
+          return summary.subtaskName;
+        });
+        var subtaskWorkingHours = subtaskSummaries.map(function(summary) {
+          return summary.totalWorkingHours;
+        });
+
+        // Update project chart
+        createChart("pieChart", projectWorkingHours, generateRandomColors(projectWorkingHours.length));
         pieChart.data.labels = projectNames;
-        pieChartModule.data.labels = projectNames;
-        pieChartTask.data.labels = projectNames;
-        pieChartSubTask.data.labels = projectNames;
-
         pieChart.update();
+
+        // Update module chart
+        createChart("pieChartModule", moduleWorkingHours, generateRandomColors(moduleWorkingHours.length));
+        pieChartModule.data.labels = moduleNames;
         pieChartModule.update();
+
+        // Update task chart
+        createChart("pieChartTask", taskWorkingHours, generateRandomColors(taskWorkingHours.length));
+        pieChartTask.data.labels = taskNames;
         pieChartTask.update();
+
+        // Update subtask chart
+        createChart("pieChartSubTask", subtaskWorkingHours, generateRandomColors(subtaskWorkingHours.length));
+        pieChartSubTask.data.labels = subtaskNames;
         pieChartSubTask.update();
       },
-      error: function(error) {
-        console.log(error);
+      error: function() {
+        document.getElementById("nores").innerHTML = "Error occurred while fetching data";
+        document.getElementById("noresModule").innerHTML = "Error occurred while fetching data";
+        document.getElementById("noresTask").innerHTML = "Error occurred while fetching data";
+        document.getElementById("noresSubTask").innerHTML = "Error occurred while fetching data";
+        destroyChart();
       }
     });
+  }
+
+  function generateRandomColors(count) {
+    var colors = [];
+    for (var i = 0; i < count; i++) {
+      colors.push(getRandomColor());
+    }
+    return colors;
+  }
+
+  function getRandomColor() {
+    var letters = '0123456789ABCDEF';
+    var color = '#';
+    for (var i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
   }
 
   function destroyChart() {
@@ -173,17 +236,44 @@
     }
   }
 
-  function generateRandomColors(numColors) {
-    var colors = [];
-    for (var i = 0; i < numColors; i++) {
-      var color = '#' + Math.floor(Math.random() * 16777215).toString(16);
-      colors.push(color);
-    }
-    return colors;
-  }
+  
   </script>
 <style>
   .chart-row {
+    display: flex;
+    margin-bottom: 100px;
+    margin-top: 20px;
+  }
+
+  .chart-container {
+    flex: 1;
+    width: 100%;
+    max-width: 500px;
+    height: 600px;
+    margin: 10px 10px 10px 10px;
+    background-color: #f5f5f5;
+    border: 1px solid #ccc;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1), 0 8px 24px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+  }
+
+  .chart-container canvas {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 400px;
+  }
+  
+  .chart-container h1 {
+    margin-top: 0;
+    margin-bottom: 10px;
+  }
+  
+   .chart-row {
     display: flex;
     margin-bottom: 100px;
     margin-top: 20px;

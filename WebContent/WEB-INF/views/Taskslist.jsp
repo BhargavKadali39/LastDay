@@ -55,7 +55,7 @@
                 <td>${task.taskSupervisorId}</td>
                 <td>${task.taskStatus}</td>
                 <td>
-                    <c:if test="${task.taskStatus == 'In Progress'}">
+                    <c:if test="${task.taskStatus == 'open'}">
 							<form action="updateSuccess" method="GET" style="display: inline;">
     							<input type="hidden" name="taskId" value="${task.taskId}" />
     							<button type="submit" class="btn btn-primary update-button">Update Status</button>

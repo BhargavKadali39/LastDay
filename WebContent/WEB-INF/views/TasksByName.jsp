@@ -3,7 +3,6 @@
 <%@ page import="com.nkxgen.spring.orm.model.Task" %>
 <%@ page import="com.nkxgen.spring.orm.model.User,com.nkxgen.spring.orm.model.Project" %>
 
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -229,7 +228,6 @@
                 <th>Task Description</th>
                 <th>Task Category</th>
                 <th>Task Creator</th>
-                <th>Task Supervisor</th>
                 <th>Task Status</th>
                 <!-- Add more task properties as needed -->
             </tr>
@@ -241,6 +239,7 @@
                     <td>${task.taskName}</td>
                     <td>${task.taskDescription}</td>
                     <td>${task.taskCategory}</td>
+                    <td>${task.taskCreatorId}</td>
                     
                     <td>${task.taskStatus}</td>
                     <!-- Add more task properties as needed -->
@@ -248,7 +247,28 @@
             </c:forEach>
         </tbody>
     </table>
-
+    
+        <h1>Project Wise Tasks Allocated</h1>
+    
+ <table id="projectTasks">
+        <thead>
+            <tr>
+                <th>Project ID</th>
+                <th>Number of Tasks</th>
+            </tr>
+        </thead>
+        <tbody>
+            <%-- Iterate over the taskCountList and display the results --%>
+            <c:forEach items="${taskCountList}" var="taskCounts">
+                <tr>
+                    <td>${taskCounts.projectId}</td>
+                    <td>${taskCounts.taskCount}</td>
+                </tr>
+            </c:forEach>
+        </tbody>
+    </table>
+</body>
+</html>
     <%-- Include the necessary script or link tags here --%>
 </body>
 </html>
