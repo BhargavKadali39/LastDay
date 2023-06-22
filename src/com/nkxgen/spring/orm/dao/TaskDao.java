@@ -1,6 +1,6 @@
 package com.nkxgen.spring.orm.dao;
 
-
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 
 import com.nkxgen.spring.orm.model.Project;
-import com.nkxgen.spring.orm.model.ProjectTask;
 import com.nkxgen.spring.orm.model.ResTaskFilter;
 import com.nkxgen.spring.orm.model.Task;
 import com.nkxgen.spring.orm.model.TaskDto;
@@ -26,24 +25,19 @@ public class TaskDao {
 	@PersistenceContext
 	private EntityManager entityManager;
 
-	
-
 	public List<TaskDto> viewTasksForUser(int userId) {
 		return getTasksByUserId(userId);
 	}
-	
-	
-
-
 
 	public Project findProjectById(Short projectId) {
 		System.out.println("in findprojbyid");
 		return entityManager.find(Project.class, projectId);
 	}
+
 	private User findById(int userId) {
 		return entityManager.find(User.class, userId);
 	}
-	
+
 	public List<TaskDto> getTasksByUserId(int userId) {
 		User user = findById(userId);
 		String jpql = "SELECT t FROM Task t WHERE t.taskSupervisor = :user";
@@ -75,45 +69,45 @@ public class TaskDao {
 	}
 
 	public List<TaskDto> filterTasks(ResTaskFilter resTaskFilter) {
-	    System.out.println("In filterTasks");
+		System.out.println("In filterTasks");
 
-	    String jpql = "SELECT t FROM Task t WHERE 1 = 1 AND t.taskSupervisor.id = :userId";
+		String jpql = "SELECT t FROM Task t WHERE 1 = 1 AND t.taskSupervisor.id = :userId";
 
-	    TypedQuery<Task> query = entityManager.createQuery(jpql, Task.class);
+		TypedQuery<Task> query = entityManager.createQuery(jpql, Task.class);
 
-	    query.setParameter("userId", resTaskFilter.getUserId());
+		query.setParameter("userId", resTaskFilter.getUserId());
 
-	    if (resTaskFilter.getProject() != null && !resTaskFilter.getStatus().isEmpty() && !resTaskFilter.getCategory().isEmpty()) {
-	        jpql = "SELECT t FROM Task t WHERE 1 = 1 AND t.taskSupervisor.id = :userId AND t.taskCategory = :category AND t.taskStatus = :status AND t.project.id = :projectId";
-	        Project project = findProjectById(resTaskFilter.getProject());
-	        query.setParameter("projectId", resTaskFilter.getProject());
-	    } else {
-	        if (resTaskFilter.getProject() != null && resTaskFilter.getProject() != 0) {
-	            Project project = findProjectById(resTaskFilter.getProject());
-	            query.setParameter("projectId", resTaskFilter.getProject());
-	        }
-	        
-	        if (resTaskFilter.getStatus() != null && !resTaskFilter.getStatus().isEmpty()) {
-	            query.setParameter("status", resTaskFilter.getStatus());
-	        }
+		if (resTaskFilter.getProject() != null && !resTaskFilter.getStatus().isEmpty()
+				&& !resTaskFilter.getCategory().isEmpty()) {
+			jpql = "SELECT t FROM Task t WHERE 1 = 1 AND t.taskSupervisor.id = :userId AND t.taskCategory = :category AND t.taskStatus = :status AND t.project.id = :projectId";
+			Project project = findProjectById(resTaskFilter.getProject());
+			query.setParameter("projectId", resTaskFilter.getProject());
+		} else {
+			if (resTaskFilter.getProject() != null && resTaskFilter.getProject() != 0) {
+				Project project = findProjectById(resTaskFilter.getProject());
+				query.setParameter("projectId", resTaskFilter.getProject());
+			}
 
-	        if (resTaskFilter.getCategory() != null && !resTaskFilter.getCategory().isEmpty()) {
-	            query.setParameter("category", resTaskFilter.getCategory());
-	        }
-	    }
+			if (resTaskFilter.getStatus() != null && !resTaskFilter.getStatus().isEmpty()) {
+				query.setParameter("status", resTaskFilter.getStatus());
+			}
 
-	    List<Task> filteredTasks = query.getResultList();
-	    List<TaskDto> filteredTaskDTOs = new ArrayList<>();
+			if (resTaskFilter.getCategory() != null && !resTaskFilter.getCategory().isEmpty()) {
+				query.setParameter("category", resTaskFilter.getCategory());
+			}
+		}
 
-	    for (Task task : filteredTasks) {
-	        TaskDto dto = TaskDto.fromEntity(task);
-	        filteredTaskDTOs.add(dto);
-	    }
+		List<Task> filteredTasks = query.getResultList();
+		List<TaskDto> filteredTaskDTOs = new ArrayList<>();
 
-	    return filteredTaskDTOs;
+		for (Task task : filteredTasks) {
+			TaskDto dto = TaskDto.fromEntity(task);
+			filteredTaskDTOs.add(dto);
+		}
+
+		return filteredTaskDTOs;
 	}
 
-	
 	public Task getTaskById(int taskId) {
 		return entityManager.find(Task.class, taskId);
 	}
@@ -132,21 +126,14 @@ public class TaskDao {
 		return rowsAffected > 0;
 	}
 
-
-
-
-
-
 	public List<Task> getTasksByProjectId(int projId) {
 		// TODO Auto-generated method stub
 		short projectId = (short) projId;
-		TypedQuery<Task> query = entityManager.createQuery(
-				"SELECT pt FROM Task pt WHERE pt.project.projectId = :projectId",
-				Task.class);
+		TypedQuery<Task> query = entityManager
+				.createQuery("SELECT pt FROM Task pt WHERE pt.project.projectId = :projectId", Task.class);
 		query.setParameter("projectId", projectId);
 		return query.getResultList();
 	}
-
 
 	public List<Task> getCompTasksByProjectId(int projId) {
 		// TODO Auto-generated method stub
@@ -156,6 +143,33 @@ public class TaskDao {
 				Task.class);
 		query.setParameter("projectId", projectId);
 		return query.getResultList();
+	}
+
+	public int getCompletedTasksByUserId(int userId) {
+		User user = findById(userId);
+		String jpql = "SELECT COUNT(t) FROM Task t WHERE t.taskSupervisor = :user AND t.taskStatus = 'completed'";
+		TypedQuery<Long> query = entityManager.createQuery(jpql, Long.class);
+		query.setParameter("user", user);
+		Long result = query.getSingleResult();
+		return result != null ? result.intValue() : 0;
+	}
+
+	public int getTotalTasksByUserId(int userId) {
+		User user = findById(userId);
+		String jpql = "SELECT COUNT(t) FROM Task t WHERE t.taskSupervisor = :user";
+		TypedQuery<Long> query = entityManager.createQuery(jpql, Long.class);
+		query.setParameter("user", user);
+		Long result = query.getSingleResult();
+		return result != null ? result.intValue() : 0;
+	}
+
+	public double getHoursWorkedByUserId(int userId) {
+		User user = findById(userId);
+		String jpql = "SELECT SUM(t.numberOfHoursRequired) FROM Task t WHERE t.taskSupervisor = :user";
+		TypedQuery<BigDecimal> query = entityManager.createQuery(jpql, BigDecimal.class);
+		query.setParameter("user", user);
+		BigDecimal result = query.getSingleResult();
+		return result != null ? result.doubleValue() : 0;
 	}
 
 	// Implement other methods of the TaskDao interface...

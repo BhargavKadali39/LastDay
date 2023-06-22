@@ -9,8 +9,8 @@ import com.nkxgen.spring.orm.model.TaskDto;
 
 public interface TaskService {
 
+	List<TaskDto> filterTasks(ResTaskFilter resTaskFilter);
 
-	List<TaskDto> filterTasks(ResTaskFilter  resTaskFilter);
 	List<TaskDto> getTasksByUserId(int userId);
 
 	List<TaskDto> PtfilterTasks(TFilterCriteria filterCriteria);
@@ -22,7 +22,17 @@ public interface TaskService {
 	void saveTask(Task task);
 
 	Boolean updateStatus(int taskId);
+
 	// Other task-related methods...
 	List<Task> getTasksByProjectId(Integer projId);
+
 	List<Task> getCompTasksByProjectId(Integer projId);
+
+	double getHoursWorkedByUserId(int userId);
+
+	public double calculatePerformanceScore(int compTasks, int totalTasks);
+
+	int getTotalTasksByUserId(int userId);
+
+	int getCompletedTasksByUserId(int userId);
 }

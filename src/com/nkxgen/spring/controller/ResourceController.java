@@ -1,7 +1,10 @@
 package com.nkxgen.spring.controller;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -18,6 +21,7 @@ import com.nkxgen.spring.orm.model.ProjectDto;
 import com.nkxgen.spring.orm.model.ResTaskFilter;
 import com.nkxgen.spring.orm.model.ResourceFilter;
 import com.nkxgen.spring.orm.model.Role;
+import com.nkxgen.spring.orm.model.TaskCountview;
 import com.nkxgen.spring.orm.model.TaskDto;
 import com.nkxgen.spring.orm.model.User;
 import com.nkxgen.spring.orm.model.UserDto;
@@ -54,15 +58,27 @@ public class ResourceController {
 		List<UserDto> resources = resourceService.getAllResources();
 		List<ProjectDto> projects = projectService.getAllProjects(); // Retrieve all projects
 		List<Role> roles = roleService.getAllRoles(); // Retrieve all roles
-		System.out.println("resources List JSP Requested");
+
+		// Calculate performance score, hours worked, and tasks completed for each resource
+		for (UserDto resource : resources) {
+			int completedTasks = taskService.getCompletedTasksByUserId(resource.getUserId());
+			int totalTasks = taskService.getTotalTasksByUserId(resource.getUserId());
+			double performanceScore = taskService.calculatePerformanceScore(completedTasks, totalTasks);
+
+			// Retrieve hours worked and tasks completed
+			double hoursWorked = taskService.getHoursWorkedByUserId(resource.getUserId());
+
+			resource.setPerformanceScore(performanceScore);
+			resource.setHoursWorked(hoursWorked);
+			resource.setTasksCompleted(completedTasks);
+		}
+
 		model.addAttribute("resources", resources);
 		model.addAttribute("projects", projects);
 		model.addAttribute("roles", roles);
 
 		return "ResourceHome";
 	}
-
-	// ...
 
 	@RequestMapping(value = "/resources/filter", method = RequestMethod.GET)
 	@ResponseBody
@@ -140,15 +156,31 @@ public class ResourceController {
 	@RequestMapping(value = "/resources/tasks", method = RequestMethod.GET)
 	public String viewTasksForUser(@RequestParam("userId") int userId, Model model) {
 		// Assuming you have a method in your service layer to retrieve tasks by user ID
-
-		model.addAttribute("userId", userId);
 		List<TaskDto> tasks = taskService.getTasksByUserId(userId);
 		List<ProjectDto> projects = projectService.getAllProjects();
-		model.addAttribute("projects", projects);
-		System.out.println(tasks);
-		model.addAttribute("tasks", tasks);
 
+		// Group tasks by project ID and count the number of tasks per project
+		Map<Integer, Integer> projectTaskCount = new HashMap<>();
+		for (TaskDto task : tasks) {
+			Integer projectId = task.getProjectId();
+			int count = projectTaskCount.getOrDefault(projectId, 0);
+			projectTaskCount.put(projectId, count + 1);
+		}
+
+		List<TaskCountview> taskCountList = new ArrayList<>();
+		for (Map.Entry<Integer, Integer> entry : projectTaskCount.entrySet()) {
+			int projectId = entry.getKey();
+			int taskCount = entry.getValue();
+			TaskCountview taskCountDto = new TaskCountview(projectId, taskCount);
+			taskCountList.add(taskCountDto);
+		}
+
+		model.addAttribute("userId", userId);
 		model.addAttribute("tasks", tasks);
+		model.addAttribute("projects", projects);
+		model.addAttribute("taskCountList", taskCountList);
+		System.out.println("data " + taskCountList);
+
 		return "TasksByName"; // Replace with the name of your JSP page to display tasks
 	}
 

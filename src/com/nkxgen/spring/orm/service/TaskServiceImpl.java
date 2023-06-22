@@ -23,17 +23,16 @@ public class TaskServiceImpl implements TaskService {
 	public TaskServiceImpl(TaskDao taskDao) {
 		this.taskDao = taskDao;
 	}
-	
+
 	@Override
-	public List<TaskDto> filterTasks(ResTaskFilter  resTaskFilter) {
+	public List<TaskDto> filterTasks(ResTaskFilter resTaskFilter) {
 		return taskDao.filterTasks(resTaskFilter);
 	}
-	
+
 	@Override
 	public List<TaskDto> getTasksByUserId(int userId) {
 		return taskDao.getTasksByUserId(userId);
 	}
-
 
 	@Override
 	public List<TaskDto> getAllTasks() {
@@ -58,13 +57,11 @@ public class TaskServiceImpl implements TaskService {
 	}
 	// Implement other methods of the TaskService interface...
 
-
 	@Override
 	public List<TaskDto> PtfilterTasks(TFilterCriteria filterCriteria) {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 
 	@Override
 	public List<Task> getTasksByProjectId(Integer projId) {
@@ -72,10 +69,35 @@ public class TaskServiceImpl implements TaskService {
 		return taskDao.getTasksByProjectId(projId);
 	}
 
-
 	@Override
 	public List<Task> getCompTasksByProjectId(Integer projId) {
 		// TODO Auto-generated method stub
 		return taskDao.getCompTasksByProjectId(projId);
+	}
+
+	@Override
+	public int getCompletedTasksByUserId(int userId) {
+		return taskDao.getCompletedTasksByUserId(userId);
+	}
+
+	@Override
+	public int getTotalTasksByUserId(int userId) {
+		List<TaskDto> tasks = taskDao.getTasksByUserId(userId);
+		return tasks.size();
+	}
+
+	@Override
+	public double getHoursWorkedByUserId(int userId) {
+		// Implement the logic to retrieve the hours worked by the user
+		// You can use the appropriate data access method or service call here
+		// and return the number of hours worked
+		return taskDao.getHoursWorkedByUserId(userId);
+	}
+
+	public double calculatePerformanceScore(int completedTasks, int totalTasks) {
+		if (totalTasks == 0) {
+			return 0.0; // Avoid division by zero
+		}
+		return (double) completedTasks / totalTasks * 100.0;
 	}
 }
